@@ -31,6 +31,10 @@ class TeamSingularResponse(BaseModel):
 class TeamDataBulkResponse(BaseModel):
     team_data: list[TeamSingularResponse]
 
+class RankResponse(BaseModel):
+    id: int
+    score: float
+
 @router.get("/", response_model=TeamDataBulkResponse)
 def get_all_teams():
     session = Session()
@@ -62,6 +66,31 @@ def get_all_teams():
         ))
     response.team_data.sort(key=lambda x: x.average_top_three, reverse=True)
     return response
+
+@router.get("/get_ranks", response_model=list[RankResponse])
+def get_ranks():
+    session = Session()
+    combined_data = []
+    
+    scores = session.query(Score).all()
+    team_scores_map = {}
+    for score_obj in scores:
+        team_id = int(str(score_obj.team_id))
+        score = int(str(score_obj.score))
+        if team_id not in team_scores_map:
+            team_scores_map[team_id] = []
+        team_scores_map[team_id].append(score)
+
+    for team_id, team_scores in team_scores_map.items():
+        all_scores = sorted(team_scores, reverse=True)
+        top_three_scores = all_scores[:3]
+        average_top_three = (sum(top_three_scores) / len(top_three_scores)) if top_three_scores else 0
+        combined_data.append(RankResponse(id=team_id, score=average_top_three))
+
+    combined_data.sort(key=lambda x: x.score, reverse=True)
+    session.close()
+
+    return combined_data
 
     team_data: list[TeamSingularResponse]
 @router.get("/{team_id}", response_model=TeamSingularResponse)
@@ -153,3 +182,15 @@ def rename_team(request: TeamRequest):
     session.refresh(team)
     session.close()
     return {"detail": True}
+
+@router.post("/get_events", response_model=list[EventBase])
+def get_events(request: TeamRequest):
+    session = Session()
+    team = session.query(Team).filter_by(id=request.team_id).first()
+    if not team:
+        session.close()
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    events = session.query(Event).filter_by(team_id=request.team_id).all()
+    session.close()
+    return [EventBase(name=str(event.name), date=datetime.datetime.now()) for event in events]
