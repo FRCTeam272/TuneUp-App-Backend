@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from database_setup import Team, Score
+from database.database_setup import Team, Score
 import routes.env as env
 
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
-from database_setup import Event, Team, Score
+from database.database_setup import Event, Team, Score
 
 import routes.env as env
 
