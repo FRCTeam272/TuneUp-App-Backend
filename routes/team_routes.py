@@ -43,6 +43,8 @@ def get_all_teams():
     response = TeamDataBulkResponse(team_data=[])
     for team in teams:
         scores = session.query(Score).filter_by(team_id=team.id).all()
+        events = session.query(Event).filter_by(team_id=team.id).all()
+        events = [EventBase(name=str(event.name), date=event.date) for event in events]
         team_data = {
             'team_id': int(str(team.id)),
             'name': str(team.name),
@@ -62,7 +64,7 @@ def get_all_teams():
             scores=team_data['scores'],
             top_three_scores=team_data['top_three_scores'],
             average_top_three=team_data['average_top_three'],
-            events=None
+            events=events
         ))
     response.team_data.sort(key=lambda x: x.average_top_three, reverse=True)
     return response
@@ -104,7 +106,7 @@ def get_team(team_id: int):
     scores = session.query(Score).filter_by(team_id=team_id).all()
     session.close()
     
-    team_data = {
+    team_data = {   
         'team_id': int(str(team.id)),
         'name': str(team.name),
         'scores': [],
@@ -193,4 +195,4 @@ def get_events(request: TeamRequest):
 
     events = session.query(Event).filter_by(team_id=request.team_id).all()
     session.close()
-    return [EventBase(name=str(event.name), date=datetime.datetime.now()) for event in events]
+    return [EventBase(name=str(event.name), date=event.date) for event in events]
