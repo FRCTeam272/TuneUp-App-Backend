@@ -96,8 +96,8 @@ def get_ranks():
     session.close()
 
     return combined_data
-
-    team_data: list[TeamSingularResponse]
+    # team_data: list[TeamSingularResponse]
+    
 @router.get("/{team_id}", response_model=TeamSingularResponse)
 def get_team(team_id: int):
     session = Session()
