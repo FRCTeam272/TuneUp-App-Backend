@@ -31,6 +31,13 @@ class ScheduleResponse(BaseModel):
     name: str
     date: datetime
 
+class RoomAssignmentResponse(BaseModel):
+    room: str
+    team_id: int
+    team_name: str
+    judge_session: str
+    judge_group: str
+
 @router.get("/", response_model=List[ScheduleResponse])
 def get_schedule():
     session = Session()
@@ -59,3 +66,24 @@ def get_schedule():
         values.append(ScheduleResponse(info=temp, date=date, name=text))
     
     return values
+
+@router.get("/rooms", response_model=List[RoomAssignmentResponse])
+def room_assignment():
+    session = Session()
+    teams = session.query(Team).all()
+    events = session.query(Event).filter(Event.name.contains("Judge")).all()
+    session.close()
+
+    room_assignments = []
+    for event in events:
+        team = next((team for team in teams if team.id == event.team_id), None)
+        if team:
+            room_assignments.append(RoomAssignmentResponse(
+                room=team.room if hasattr(team, 'room') else "Unknown",
+                team_id=team.id,
+                team_name=team.name,
+                judge_session=event.name.split(":")[0] if event.name else "Unknown",
+                judge_group=event.name.split(":")[1].strip() if ":" in event.name else "Unknown"
+            ))
+    
+    return room_assignments
