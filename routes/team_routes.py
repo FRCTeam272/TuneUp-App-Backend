@@ -24,6 +24,7 @@ class EventBase(BaseModel):
 class TeamSingularResponse(BaseModel):
     team_id: int
     name: str
+    room: str | None = None
     scores: list[int]
     top_three_scores: list[int]
     average_top_three: float
@@ -48,6 +49,7 @@ def get_all_teams():
         team_data = {
             'team_id': int(str(team.id)),
             'name': str(team.name),
+            'room': str(team.room) if hasattr(team, 'room') else None,
             'scores': [],
             'top_three_scores': [],
             'average_top_three': 0.0
@@ -61,6 +63,7 @@ def get_all_teams():
         response.team_data.append(TeamSingularResponse(
             team_id=int(str(team.id)),
             name=str(team.name),
+            room=str(team.room) if hasattr(team, 'room') else None,
             scores=team_data['scores'],
             top_three_scores=team_data['top_three_scores'],
             average_top_three=team_data['average_top_three'],
@@ -126,10 +129,11 @@ def get_team(team_id: int):
     return TeamSingularResponse(
         team_id=int(str(team.id)),
         name=str(team.name),
+        room=str(team.room) if hasattr(team, 'room') else None,
         scores=team_data['scores'],
         top_three_scores=team_data['top_three_scores'],
         average_top_three=team_data['average_top_three'],
-        events=[EventBase(name=str(event.name), date=datetime.datetime.now()) for event in events]
+        events=[EventBase(name=str(event.name), date=event.date) for event in events]
     )
 
 @router.post("/", response_model=TeamSingularResponse)
@@ -146,6 +150,7 @@ def create_team(request: TeamRequest):
     return TeamSingularResponse(
         team_id=int(str(new_team.id)),
         name=str(new_team.name),
+        room=str(new_team.room) if hasattr(new_team, 'room') else None,
         scores=[],
         top_three_scores=[],
         average_top_three=0.0,

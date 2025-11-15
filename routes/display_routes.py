@@ -17,6 +17,7 @@ class EventBase(BaseModel):
 class display_team_scores_response(BaseModel):
     team_id: int
     team_name: str
+    room: str | None = None
     scores: list[int]
     top_three_scores: list[int]
     average_top_three: float
@@ -39,6 +40,7 @@ def display_scores():
         combined_data.append(display_team_scores_response(
             team_id=int(str(team.id)),
             team_name=str(team.name),
+            room=str(team.room) if hasattr(team, 'room') else None,
             scores=team_scores,
             top_three_scores=top_three_scores,
             average_top_three=average_top_three,
@@ -70,6 +72,7 @@ def display_team_scores(team_id: int):
     return display_team_scores_response(
         team_id=int(str(team.id)),
         team_name=str(team.name),
+        room=str(team.room) if hasattr(team, 'room') else None, 
         scores=team_scores,
         top_three_scores=top_three_scores,
         average_top_three=average_top_three,
