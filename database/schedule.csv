@@ -1,7 +1,7 @@
 Index:,Rm:Num,Team Number,Team Name,Coach Meeting in Gym,Morning Session 1,Morning Session 2,Morning Session 3,Morning Session 4,Morning Session 5,Morning Session 6,Opening Ceremony,Round 1 Match 1,Round 1 Match 2,Round 1 Match 3,Round 1 Match 4,Round 2 Match 1,Round 2 Match 2,Round 2 Match 3,Round 2 Match 4,Round 3 Match 1,Round 3 Match 2,Round 3 Match 3,Round 3 Match 4,Round 4 Match 1,Round 4 Match 2,Round 4 Match 3,Round 4 Match 4,Round 5 Match 1,Round 5 Match 2,Round 5 Match 3,Round 5 Match 4,Closing Ceremony
 0,Rm: 000,,,8:30 AM,9:00 AM,9:30 AM,10:00 AM,10:30 AM,11:00 AM,11:30 AM,12:00 PM,12:15 PM,12:22 PM,12:29 PM,12:36 PM,12:43 PM,12:50 PM,12:57 PM,1:04 PM,1:11 PM,1:18 PM,1:25 PM,1:32 PM,1:39 PM,1:46 PM,1:53 PM,2:00 PM,2:07 PM,2:14 PM,2:21 PM,2:28 PM,3:00 PM
-,RM:105-i,RoboHatters Red,4403,Coach Meeting in Gym,Judge Grp 1,,,Table 1,,,Opening Ceremony,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Closing Ceremony
-,RM:105-ii,RoboHatters Black,4404,Coach Meeting in Gym,Table 1,,,Judge Grp 1,,,Opening Ceremony,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,Closing Ceremony
+,RM:105-i,RoboHatters Black,4403,Coach Meeting in Gym,Judge Grp 1,,,Table 1,,,Opening Ceremony,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Closing Ceremony
+,RM:105-ii,RoboHatters Red,4404,Coach Meeting in Gym,Table 1,,,Judge Grp 1,,,Opening Ceremony,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,Closing Ceremony
 ,RM:107-i,RoboHatters Grey,4405,Coach Meeting in Gym,,Judge Grp 1,,,Table 1,,Opening Ceremony,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,Closing Ceremony
 ,RM:107-ii,RoboHatters Blue,11113,Coach Meeting in Gym,,Table 1,,,Judge Grp 1,,Opening Ceremony,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,Closing Ceremony
 ,RM:109-i,Cruzin' Comets White,66442,Coach Meeting in Gym,,,Judge Grp 1,,,Table 1,Opening Ceremony,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Closing Ceremony
