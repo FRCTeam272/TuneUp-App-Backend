@@ -25,10 +25,6 @@ app.include_router(score_routes.router, prefix="/score", tags=["Scores"])
 app.include_router(display_routes.router, prefix="/display", tags=["Display"])
 app.include_router(schedule_routes.router, prefix="/schedule", tags=["Schedule"])
 
-@app.get("/health")
-def health_check():
-    return {"healthy": True}
-
 app.route("/")(lambda: {"message": "Welcome to the FLL Scoreboard API"})
 
 app.add_middleware(
