@@ -4,11 +4,12 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+from routes.env import database_url_env
 from database.database_setup import Event, Team
 
 router = APIRouter()
 
-engine = create_engine('sqlite:///./team.db')
+engine = create_engine(database_url_env)
 Session = sessionmaker(bind=engine)
 
 class Entry(BaseModel):

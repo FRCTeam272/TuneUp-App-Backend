@@ -4,13 +4,13 @@ from pydantic import BaseModel
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from database.database_setup import Event, Team, Score
-
+from routes.env import database_url_env
 import routes.env as env
 
 router = APIRouter()
 
 # Setup database engine and session
-engine = create_engine('sqlite:///./team.db')
+engine = create_engine(database_url_env)
 Session = sessionmaker(bind=engine)
 
 

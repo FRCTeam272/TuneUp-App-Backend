@@ -2,6 +2,13 @@ from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy import create_engine
+    
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # take environment variables from .env file
+password_env = os.getenv("password", "")
+database_url_env = os.getenv("database_url", "")
 
 Base = declarative_base()
 
@@ -26,8 +33,9 @@ class Event(Base):
     date = Column(DateTime, nullable=False)
     team_id = Column(Integer, ForeignKey('team.id'))
     team = relationship(Team)
+
 # we will have to move this to an online endpoint at some point
-engine = create_engine('sqlite:///team.db')
+engine = create_engine(database_url_env)
 
 
 Base.metadata.create_all(engine)

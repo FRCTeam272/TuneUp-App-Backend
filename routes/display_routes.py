@@ -9,7 +9,7 @@ import routes.env as env
 router = APIRouter()
 
 # Setup database engine and session
-engine = create_engine('sqlite:///./team.db')
+engine = create_engine(env.database_url_env)
 Session = sessionmaker(bind=engine)
 class EventBase(BaseModel):
     name: str

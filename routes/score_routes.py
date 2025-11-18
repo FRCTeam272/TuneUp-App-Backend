@@ -4,12 +4,13 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from database.database_setup import Team, Score
 import routes.env as env
+from routes.env import database_url_env
 
 
 router = APIRouter()
 
 # Setup database engine and session
-engine = create_engine('sqlite:///./team.db')
+engine = create_engine(database_url_env)
 Session = sessionmaker(bind=engine)
 
 
