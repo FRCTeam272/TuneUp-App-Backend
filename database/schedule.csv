@@ -3,22 +3,22 @@ Index:,Rm:Num,Team Number,Team Name,Coach Meeting in Gym,Morning Session 1,Morni
 ,RM:105-i,RoboHatters Black,4403,Coach Meeting in Gym,Judge Grp 1,,,Table 1,,,Opening Ceremony,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Closing Ceremony
 ,RM:105-ii,RoboHatters Red,4404,Coach Meeting in Gym,Table 1,,,Judge Grp 1,,,Opening Ceremony,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,Closing Ceremony
 ,RM:107-i,RoboHatters Grey,4405,Coach Meeting in Gym,,Judge Grp 1,,,Table 1,,Opening Ceremony,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,Closing Ceremony
-,RM:107-ii,RoboHatters Blue,11113,Coach Meeting in Gym,,Table 1,,,Judge Grp 1,,Opening Ceremony,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,Closing Ceremony
+,RM:107-ii,RoboHatters Blue,31342,Coach Meeting in Gym,,Table 1,,,Judge Grp 1,,Opening Ceremony,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,,,,Table 1,Closing Ceremony
 ,RM:109-i,Cruzin' Comets White,66442,Coach Meeting in Gym,,,Judge Grp 1,,,Table 1,Opening Ceremony,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Closing Ceremony
 ,RM:109-ii,Cruzin' Comets Blue,45032,Coach Meeting in Gym,,,Table 1,,,Judge Grp 1,Opening Ceremony,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,Closing Ceremony
 ,RM:110-i,Corpus Christi,74053,Coach Meeting in Gym,,,Judge Grp 2,,,Table 2,Opening Ceremony,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,Closing Ceremony
 ,RM:110-ii,Bricktastic Builders,67393,Coach Meeting in Gym,,,Table 2,,,Judge Grp 2,Opening Ceremony,,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,,,,Table 2,Closing Ceremony
 ,RM:111-i,RoboHuskies,66313,Coach Meeting in Gym,,Judge Grp 2,,,Table 2,,Opening Ceremony,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Closing Ceremony
 ,RM:111-ii,OLGC Cougears,60387,Coach Meeting in Gym,,Table 2,,,Judge Grp 2,,Opening Ceremony,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,Closing Ceremony
-,RM:112-i,LC Robotics,32382,Coach Meeting in Gym,Judge Grp 2,,,Table 2,,,Opening Ceremony,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,Closing Ceremony
-,RM:112-ii,LC Robotics,32383,Coach Meeting in Gym,Table 2,,,Judge Grp 2,,,Opening Ceremony,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,Closing Ceremony
+,RM:112-i,Archeology Blockheads: LC,32382,Coach Meeting in Gym,Judge Grp 2,,,Table 2,,,Opening Ceremony,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,Closing Ceremony
+,RM:112-ii,Fabulous 10: LC,32383,Coach Meeting in Gym,Table 2,,,Judge Grp 2,,,Opening Ceremony,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,,,,Table 3,Closing Ceremony
 ,RM:114-i,Saint Luke Blue,71108,Coach Meeting in Gym,Judge Grp 3,,,Table 3,,,Opening Ceremony,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,,,Closing Ceremony
 ,RM:114-ii,Saint Luke Gold,60147,Coach Meeting in Gym,Table 3,,,Judge Grp 3,,,Opening Ceremony,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,,Closing Ceremony
 ,RM:116-i,Reynolds Robot Raiders,61191,Coach Meeting in Gym,,Judge Grp 3,,,Table 3,,Opening Ceremony,,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,Closing Ceremony
 ,RM:116-ii,Reading SWMS Robotics Team,65222,Coach Meeting in Gym,,Table 3,,,Judge Grp 3,,Opening Ceremony,,,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,,,,Table 4,Closing Ceremony
 ,RM:201-i,St. Jude Robotics -Alpha,62298,Coach Meeting in Gym,,,Judge Grp 3,,,Table 3,Opening Ceremony,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Closing Ceremony
-,RM:201-ii,St. Jude Robotics Beta,62299,Coach Meeting in Gym,,,Table 3,,,Judge Grp 3,Opening Ceremony,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,Closing Ceremony
-,RM:202-i,St. Jude Robotics Gamma,62300,Coach Meeting in Gym,,,Judge Grp 4,,,Table 4,Opening Ceremony,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,Closing Ceremony
+,RM:201-ii, St. Jude Robotics Gamma,62300,Coach Meeting in Gym,,,Table 3,,,Judge Grp 3,Opening Ceremony,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,Closing Ceremony
+,RM:212-i,St. Jude Robotics Beta,62299,Coach Meeting in Gym,,,Judge Grp 4,,,Table 4,Opening Ceremony,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,Closing Ceremony
 ,RM:206-i,Clankers,74588,Coach Meeting in Gym,,,Table 4,,,Judge Grp 4,Opening Ceremony,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,,,,Table 5,Closing Ceremony
 ,RM:203-i,Titan Tech,61485,Coach Meeting in Gym,,Judge Grp 4,,,Table 4,,Opening Ceremony,Table 6,,,,Table 6,,,,Table 6,,,,Table 6,,,,Table 6,,,,Closing Ceremony
 ,RM:203-ii,Cryptobots,61197,Coach Meeting in Gym,,Table 4,,,Judge Grp 4,,Opening Ceremony,,Table 6,,,,Table 6,,,,Table 6,,,,Table 6,,,,Table 6,,,Closing Ceremony
