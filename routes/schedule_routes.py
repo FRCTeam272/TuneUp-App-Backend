@@ -76,6 +76,8 @@ def _build_rooms(data):
             continue
         team = data.teams_by_id.get(event.team_id)
         if team:
+            if not hasattr(team, "room"):
+                team.room = "Unknown"
             room_assignments.append(RoomAssignmentResponse(
                 room=team.room,
                 team_id=team.id,
