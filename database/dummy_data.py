@@ -1,4 +1,4 @@
-from database.database_setup import Team, Score, engine
+from database_setup import Team, Score, engine
 from sqlalchemy.orm import sessionmaker
 import requests
 from bs4 import BeautifulSoup

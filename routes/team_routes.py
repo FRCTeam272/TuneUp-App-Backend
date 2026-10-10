@@ -1,17 +1,13 @@
 import datetime
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from database.database_setup import Event, Team, Score
-from routes.env import database_url_env
+from database.database_setup import ROSTER, SCORES, Session, Team, Score, Event, bump_cache_versions
+from routes.cache import cached_response, current_versions, not_found
+from routes.data import roster, standings, summarize
+from routes.schemas import DetailResponse
 import routes.env as env
 
 router = APIRouter()
-
-# Setup database engine and session
-engine = create_engine(database_url_env)
-Session = sessionmaker(bind=engine)
 
 
 class TeamRequest(BaseModel):
@@ -36,105 +32,44 @@ class RankResponse(BaseModel):
     id: int
     score: float
 
-@router.get("/", response_model=TeamDataBulkResponse)
-def get_all_teams():
-    session = Session()
-    teams = session.query(Team).all()
-    session.close()
-    response = TeamDataBulkResponse(team_data=[])
-    for team in teams:
-        scores = session.query(Score).filter_by(team_id=team.id).all()
-        events = session.query(Event).filter_by(team_id=team.id).all()
-        events = [EventBase(name=str(event.name), date=event.date) for event in events]
-        team_data = {
-            'team_id': int(str(team.id)),
-            'name': str(team.name),
-            'room': str(team.room) if hasattr(team, 'room') else None,
-            'scores': [],
-            'top_three_scores': [],
-            'average_top_three': 0.0
-        }
-        team_data['scores'] = [int(str(score.score)) for score in scores]
-        # Calculate top three scores and average
-        all_scores = sorted(team_data['scores'], reverse=True)
-        team_data['top_three_scores'] = all_scores[:3]
-        team_data['average_top_three'] = (sum(team_data['top_three_scores']) / len(team_data['top_three_scores'])) if team_data['top_three_scores'] else 0
+def _team_response(standing, events_by_team):
+    team = standing.team
+    return TeamSingularResponse(
+        team_id=team.id,
+        name=str(team.name),
+        room=str(team.room),
+        scores=standing.scores,
+        top_three_scores=standing.top_three_scores,
+        average_top_three=standing.average_top_three,
+        events=[EventBase(name=str(event.name), date=event.date) for event in events_by_team.get(team.id, [])]
+    )
 
-        response.team_data.append(TeamSingularResponse(
-            team_id=int(str(team.id)),
-            name=str(team.name),
-            room=str(team.room) if hasattr(team, 'room') else None,
-            scores=team_data['scores'],
-            top_three_scores=team_data['top_three_scores'],
-            average_top_three=team_data['average_top_three'],
-            events=events
-        ))
-    response.team_data.sort(key=lambda x: x.average_top_three, reverse=True)
-    return response
+@router.get("/", response_model=TeamDataBulkResponse)
+def get_all_teams(request: Request):
+    def build(session, versions):
+        events_by_team = roster(session, versions).events_by_team
+        return TeamDataBulkResponse(team_data=[
+            _team_response(standing, events_by_team) for standing in standings(session, versions).ranked
+        ])
+    return cached_response(request, (ROSTER, SCORES), build)
 
 @router.get("/get_ranks", response_model=list[RankResponse])
-def get_ranks():
-    session = Session()
-    combined_data = []
-    
-    scores = session.query(Score).all()
-    team_scores_map = {}
-    for score_obj in scores:
-        team_id = int(str(score_obj.team_id))
-        score = int(str(score_obj.score))
-        if team_id not in team_scores_map:
-            team_scores_map[team_id] = []
-        team_scores_map[team_id].append(score)
+def get_ranks(request: Request):
+    def build(session, versions):
+        combined_data = [RankResponse(id=team_id, score=summarize(scores)[1])
+                         for team_id, scores in standings(session, versions).team_score_lists.items()]
+        combined_data.sort(key=lambda x: x.score, reverse=True)
+        return combined_data
+    return cached_response(request, (ROSTER, SCORES), build)
 
-    for team_id, team_scores in team_scores_map.items():
-        all_scores = sorted(team_scores, reverse=True)
-        top_three_scores = all_scores[:3]
-        average_top_three = (sum(top_three_scores) / len(top_three_scores)) if top_three_scores else 0
-        combined_data.append(RankResponse(id=team_id, score=average_top_three))
-
-    combined_data.sort(key=lambda x: x.score, reverse=True)
-    session.close()
-
-    return combined_data
-    # team_data: list[TeamSingularResponse]
-    
 @router.get("/{team_id}", response_model=TeamSingularResponse)
-def get_team(team_id: int):
-    session = Session()
-    team = session.query(Team).filter_by(id=team_id).first()
-    if not team:
-        session.close()
-        raise HTTPException(status_code=404, detail="Team not found")
-    
-    scores = session.query(Score).filter_by(team_id=team_id).all()
-    session.close()
-    
-    team_data = {   
-        'team_id': int(str(team.id)),
-        'name': str(team.name),
-        'scores': [],
-        'top_three_scores': [],
-        'average_top_three': 0.0
-    }
-    team_data['scores'] = [int(str(score.score)) for score in scores]
-    
-    events = session.query(Event).filter_by(team_id=team_id).all()
-    
-
-    # Calculate top three scores and average
-    all_scores = sorted(team_data['scores'], reverse=True)
-    team_data['top_three_scores'] = all_scores[:3]
-    team_data['average_top_three'] = (sum(team_data['top_three_scores']) / len(team_data['top_three_scores'])) if team_data['top_three_scores'] else 0
-    
-    return TeamSingularResponse(
-        team_id=int(str(team.id)),
-        name=str(team.name),
-        room=str(team.room) if hasattr(team, 'room') else None,
-        scores=team_data['scores'],
-        top_three_scores=team_data['top_three_scores'],
-        average_top_three=team_data['average_top_three'],
-        events=[EventBase(name=str(event.name), date=event.date) for event in events]
-    )
+def get_team(team_id: int, request: Request):
+    def build(session, versions):
+        standing = standings(session, versions).by_team_id.get(team_id)
+        if not standing:
+            raise not_found()
+        return _team_response(standing, roster(session, versions).events_by_team)
+    return cached_response(request, (ROSTER, SCORES), build)
 
 @router.post("/", response_model=TeamSingularResponse)
 def create_team(request: TeamRequest):
@@ -144,6 +79,7 @@ def create_team(request: TeamRequest):
     session = Session()
     new_team = Team(name=request.name, id=request.team_id)
     session.add(new_team)
+    bump_cache_versions(session, ROSTER)
     session.commit()
     session.refresh(new_team)
     session.close()
@@ -157,7 +93,9 @@ def create_team(request: TeamRequest):
         events=[]
     )
 
-@router.post("/delete")
+class DeleteTeamResponse(BaseModel):
+    detail: str
+@router.post("/delete", response_model=DeleteTeamResponse)
 def delete_team(request: TeamRequest):
     if request.password != env.password_env:
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -168,12 +106,16 @@ def delete_team(request: TeamRequest):
         session.close()
         raise HTTPException(status_code=404, detail="Team not found")
     
+    # Scores and events reference the team, so Postgres rejects deleting the team while they exist.
+    session.query(Score).filter_by(team_id=request.team_id).delete()
+    session.query(Event).filter_by(team_id=request.team_id).delete()
     session.delete(team)
+    bump_cache_versions(session, ROSTER, SCORES)
     session.commit()
     session.close()
     return {"detail": "Team deleted"}
 
-@router.post("/rename")
+@router.post("/rename", response_model=DetailResponse)
 def rename_team(request: TeamRequest):
     if request.password != env.password_env:
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -185,6 +127,7 @@ def rename_team(request: TeamRequest):
         raise HTTPException(status_code=404, detail="Team not found")
     
     team.name = request.name # pyright: ignore[reportAttributeAccessIssue]
+    bump_cache_versions(session, ROSTER)
     session.commit()
     session.refresh(team)
     session.close()
@@ -192,12 +135,9 @@ def rename_team(request: TeamRequest):
 
 @router.post("/get_events", response_model=list[EventBase])
 def get_events(request: TeamRequest):
-    session = Session()
-    team = session.query(Team).filter_by(id=request.team_id).first()
-    if not team:
-        session.close()
-        raise HTTPException(status_code=404, detail="Team not found")
-
-    events = session.query(Event).filter_by(team_id=request.team_id).all()
-    session.close()
-    return [EventBase(name=str(event.name), date=event.date) for event in events]
+    # POST so it can't use HTTP caching, but it still reuses the cached roster snapshot.
+    with Session() as session:
+        data = roster(session, current_versions(session))
+    if request.team_id not in data.teams_by_id:
+        raise not_found()
+    return [EventBase(name=str(event.name), date=event.date) for event in data.events_by_team.get(request.team_id, [])]

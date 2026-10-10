@@ -19,13 +19,18 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
-app = FastAPI()
+def operation_id(route):
+    # Readable operationIds (e.g. "getAllTeams") become method names in the generated frontend client.
+    first, *rest = route.name.split("_")
+    return first + "".join(part.capitalize() for part in rest)
+
+app = FastAPI(generate_unique_id_function=operation_id)
 app.include_router(team_routes.router, prefix="/team", tags=["Teams"])
 app.include_router(score_routes.router, prefix="/score", tags=["Scores"])
 app.include_router(display_routes.router, prefix="/display", tags=["Display"])
 app.include_router(schedule_routes.router, prefix="/schedule", tags=["Schedule"])
 
-app.route("/")(lambda: {"message": "Welcome to the FLL Scoreboard API"})
+# app.route("/")(lambda: {"message": "Welcome to the FLL Scoreboard API"})
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,3 +42,6 @@ app.add_middleware(
 
 app.openapi = custom_openapi
 
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", reload=True, host="127.0.0.1", port=5000)

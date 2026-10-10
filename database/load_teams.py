@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from database_setup import Team, Event, engine
+from database_setup import Team, Event, engine, ROSTER, SCORES, bump_cache_versions
 import pandas as pd
 import os
 from datetime import datetime, timedelta
@@ -120,7 +120,8 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv'):
                     session.add(event)
                     events_added += 1
         
-        # Commit all changes
+        # Commit all changes (and tell running API workers to drop their cached responses)
+        bump_cache_versions(session, ROSTER, SCORES)
         session.commit()
         
         print(f"\nSuccessfully loaded:")
