@@ -1,17 +1,11 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
-from database.database_setup import Team, Score
+from database.database_setup import SCORES, Session, Team, Score, bump_cache_versions
 import routes.env as env
-from routes.env import database_url_env
+from routes.schemas import DetailResponse
 
 
 router = APIRouter()
-
-# Setup database engine and session
-engine = create_engine(database_url_env)
-Session = sessionmaker(bind=engine)
 
 
 class ScoreRequest(BaseModel):
@@ -23,7 +17,7 @@ class CreateScoreResponse(BaseModel):
     id: int
     team_id: int
     score: int
-@router.post("/")
+@router.post("/", response_model=CreateScoreResponse)
 def create_score(request: ScoreRequest):
     if request.password != env.password_env: 
         raise HTTPException(status_code=403, detail="Unauthorized")
@@ -36,13 +30,20 @@ def create_score(request: ScoreRequest):
 
     new_score = Score(team_id=request.team_id, score=request.score)
     session.add(new_score)
+    bump_cache_versions(session, SCORES)
     session.commit()
     session.refresh(new_score)
     session.close()
     return CreateScoreResponse(id=int(str(new_score.id)), team_id=int(str(new_score.team_id)), score=int(str(new_score.score)))
 
-@router.post("/delete")
-def delete_score(request: ScoreRequest):
+class DeleteScoreRequest(BaseModel):
+    # Either `id` alone, or `team_id` + `score` (deletes one matching score).
+    id: int | None = None
+    team_id: int | None = None
+    score: int | None = None
+    password: str = ""
+@router.post("/delete", response_model=DetailResponse)
+def delete_score(request: DeleteScoreRequest):
     if request.password != env.password_env: 
         raise HTTPException(status_code=403, detail="Unauthorized")
     db_score = None
@@ -59,6 +60,7 @@ def delete_score(request: ScoreRequest):
         raise HTTPException(status_code=404, detail="Score not found")
 
     session.delete(db_score)
+    bump_cache_versions(session, SCORES)
     session.commit()
     session.close()
     return {"detail": True}
