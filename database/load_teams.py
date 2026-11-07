@@ -67,7 +67,7 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv', contacts_file_p
         session.query(TeamContact).delete()
         session.query(Event).delete()
         session.query(Team).delete()
-        session.commit()
+        # No commit here: the wipe and the reload commit together, so a failure leaves the old data intact.
         
         teams_added = 0
         events_added = 0

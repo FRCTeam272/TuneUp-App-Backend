@@ -1,12 +1,14 @@
 # TuneUp Backend (FLL Scoreboard API)
 
 FastAPI app (`main.py`) on Heroku: `gunicorn -w 4 -k uvicorn.workers.UvicornWorker main:app` (Procfile).
-Production pins are in `requirements.txt` (**UTF-16 LE encoded**; FastAPI 0.119 — newer FastAPI
-removed `app.route`, which `main.py` uses).
+Production pins are in `requirements.txt` (plain UTF-8). If you regenerate it with `pip freeze`,
+make sure `gunicorn` and `psycopg[binary]` survive: Heroku needs both, and a local SQLite venv doesn't.
+SQLAlchemy 2.1 uses psycopg 3 (not psycopg2) for `postgresql://` URLs.
 
 ## Config
 `.env` (gitignored) / env vars, read in `routes/env.py` and `database/database_setup.py`:
-- `database_url` — SQLAlchemy URL (Heroku Postgres in prod; `sqlite:///team.db` works locally)
+- `database_url` — SQLAlchemy URL (Heroku Postgres in prod — its `postgres://` scheme is rewritten to
+  `postgresql://`; `sqlite:///team.db` works locally)
 - `password` — shared admin password checked on every write endpoint
 
 ## Layout

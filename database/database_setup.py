@@ -9,6 +9,9 @@ import os
 load_dotenv()  # take environment variables from .env file
 password_env = os.getenv("password", "")
 database_url_env = os.getenv("database_url", "")
+# Heroku hands out "postgres://" URLs, but SQLAlchemy 1.4+ only accepts "postgresql://".
+if database_url_env.startswith("postgres://"):
+    database_url_env = "postgresql://" + database_url_env[len("postgres://"):]
 
 Base = declarative_base()
 
