@@ -1,15 +1,36 @@
 from sqlalchemy.orm import sessionmaker
-from database_setup import Team, Event, engine, ROSTER, SCORES, bump_cache_versions
+from database_setup import Team, TeamContact, Event, engine, ROSTER, SCORES, bump_cache_versions
+from load_contacts import load_contacts
+from file_picker import pick_csv
 import pandas as pd
+import sys
 import os
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
+
+# Day of the tournament; every event in the schedule is placed on this date.
+EVENT_DATE = date(2026, 11, 21)
 
 Session = sessionmaker(bind=engine)
 session = Session()
 
-def load_teams_and_events_from_csv(csv_file_path='schedule.csv'):
+def _clean_cell(value):
+    if pd.isna(value):
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def _as_int(text):
+    try:
+        return int(float(text))
+    except (TypeError, ValueError):
+        return None
+
+
+def load_teams_and_events_from_csv(csv_file_path='schedule.csv', contacts_file_path='contacts.csv'):
     """
-    Load teams and events from the schedule CSV file
+    Load teams and events from the schedule CSV file, then team contacts from contacts_file_path
+    (if it exists - see load_contacts.py).
     """
     try:
         # Read the CSV file
@@ -42,7 +63,8 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv'):
         print(f"Extracted {len(time_mapping)} time mappings")
         
         # Clear existing data
-        print("Clearing existing teams and events...")
+        print("Clearing existing teams, events and contacts...")
+        session.query(TeamContact).delete()
         session.query(Event).delete()
         session.query(Team).delete()
         session.commit()
@@ -53,51 +75,32 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv'):
         # Process each team row
         for index, row in df_filtered.iterrows():
             # Skip rows without team information (first row is headers/times)
-            team_number = row.get('Team Number', '')
-            team_name = row.get('Team Name', '')
-            room_number = row.get('Rm:Num', '')
-            
-            if pd.isna(team_number) or str(team_number).strip() == '':
+            number_cell = _clean_cell(row.get('Team Number'))
+            name_cell = _clean_cell(row.get('Team Name'))
+            room_number_clean = _clean_cell(row.get('Rm:Num'))
+
+            if number_cell is None and name_cell is None:
                 continue
-            
-            # Clean up team data
-            team_number_clean = str(team_number).strip()
-            team_name_clean = str(team_name).strip() if not pd.isna(team_name) else team_number_clean
-            room_number_clean = str(room_number).strip() if not pd.isna(room_number) else None
-            
-            # Create team with proper ID assignment
-            try:
-                team_id = int(float(team_name_clean)) if team_name_clean.replace('.', '').isdigit() else None
-            except (ValueError, TypeError):
-                team_id = None
-            
+
+            # Older schedules had "Team Number"/"Team Name" swapped, so use whichever cell is the number.
+            if _as_int(number_cell) is not None:
+                team_id, team_name_clean = _as_int(number_cell), name_cell or number_cell
+            elif _as_int(name_cell) is not None:
+                team_id, team_name_clean = _as_int(name_cell), number_cell or name_cell
+            else:
+                team_id, team_name_clean = None, number_cell or name_cell
+
             if team_id is None:
                 team_id = teams_added + 1000  # Use high numbers to avoid conflicts
-            
-            # Create team - handle case where room field might not exist in current DB
-            try:
-                team = Team(
-                    id=team_id,
-                    name=team_number_clean,
-                    room=room_number_clean
-                )
-            except TypeError:
-                # Fallback if room field doesn't exist in current database schema
-                team = Team(
-                    id=team_id,
-                    name=team_number_clean
-                )
-                print(f"Note: Room field not available in current schema for team {team_number_clean}")
+                print(f"Warning: no team number for '{team_name_clean}', using id {team_id}")
+
+            team = Team(id=team_id, name=team_name_clean, room=room_number_clean)
             session.add(team)
             teams_added += 1
-            
-            if hasattr(team, 'room'):
-                print(f"Added team: {team_number_clean} (Room: {room_number_clean})")
-            else:
-                print(f"Added team: {team_number_clean}")
-            
-            # Create events for this team - set to November 22, 2025
-            base_date = datetime(2025, 11, 22, 8, 30, 0, 0)
+            print(f"Added team: {team_id} {team_name_clean} (Room: {room_number_clean})")
+
+            # Create events for this team on EVENT_DATE
+            base_date = datetime.combine(EVENT_DATE, datetime.min.time()).replace(hour=8, minute=30)
             
             for activity, details in row.items():
                 if activity not in ['Index:', 'Rm:Num', 'Team Number', 'Team Name'] and pd.notna(details) and str(details).strip() != '':
@@ -106,8 +109,8 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv'):
                     if activity in time_mapping:
                         time_str = time_mapping[activity]
                         try:
-                            # Parse time string (e.g., "9:00 AM", "1:30 PM") for November 22, 2025
-                            event_time = datetime.strptime(f"2025-11-22 {time_str}", "%Y-%m-%d %I:%M %p")
+                            # Parse time string (e.g., "9:00 AM", "1:30 PM") on EVENT_DATE
+                            event_time = datetime.combine(EVENT_DATE, datetime.strptime(time_str, "%I:%M %p").time())
                         except ValueError:
                             print(f"Could not parse time '{time_str}' for activity '{activity}'")
                     
@@ -120,6 +123,11 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv'):
                     session.add(event)
                     events_added += 1
         
+        if contacts_file_path and os.path.exists(contacts_file_path):
+            load_contacts(session, contacts_file_path)
+        else:
+            print(f"No {contacts_file_path} found - teams have no contact info (run load_contacts.py later)")
+
         # Commit all changes (and tell running API workers to drop their cached responses)
         bump_cache_versions(session, ROSTER, SCORES)
         session.commit()
@@ -171,9 +179,21 @@ def display_events(limit=20):
     finally:
         session.close()
 
+CSV_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'CSV_Imports')
+
 if __name__ == "__main__":
+    # Paths can be given on the command line (python load_teams.py schedule.csv contacts.csv);
+    # otherwise a file dialog asks for each one.
+    schedule_path = sys.argv[1] if len(sys.argv) > 1 else pick_csv("Select the schedule CSV (teams and events)", initialdir=CSV_DIR)
+    if not schedule_path:
+        sys.exit("No schedule file selected - nothing loaded")
+    contacts_path = sys.argv[2] if len(sys.argv) > 2 else pick_csv(
+        "Select the contacts CSV (e.g. receipts.csv) - Cancel to skip contacts",
+        initialdir=os.path.dirname(os.path.abspath(schedule_path)),
+    )
+
     # Load teams and events from CSV
-    if load_teams_and_events_from_csv():
+    if load_teams_and_events_from_csv(schedule_path, contacts_path):
         # Display loaded data
         display_teams()
         display_events(30)

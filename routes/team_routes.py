@@ -1,7 +1,7 @@
 import datetime
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
-from database.database_setup import ROSTER, SCORES, Session, Team, Score, Event, bump_cache_versions
+from database.database_setup import ROSTER, SCORES, Session, Team, TeamContact, Score, Event, bump_cache_versions
 from routes.cache import cached_response, current_versions, not_found
 from routes.data import roster, standings, summarize
 from routes.schemas import DetailResponse
@@ -109,6 +109,7 @@ def delete_team(request: TeamRequest):
     # Scores and events reference the team, so Postgres rejects deleting the team while they exist.
     session.query(Score).filter_by(team_id=request.team_id).delete()
     session.query(Event).filter_by(team_id=request.team_id).delete()
+    session.query(TeamContact).filter_by(team_id=request.team_id).delete()
     session.delete(team)
     bump_cache_versions(session, ROSTER, SCORES)
     session.commit()
@@ -141,3 +142,24 @@ def get_events(request: TeamRequest):
     if request.team_id not in data.teams_by_id:
         raise not_found()
     return [EventBase(name=str(event.name), date=event.date) for event in data.events_by_team.get(request.team_id, [])]
+
+class TeamContactResponse(BaseModel):
+    team_id: int
+    contact_name: str | None = None
+    email: str | None = None
+    phone: str | None = None
+@router.post("/get_contact", response_model=TeamContactResponse)
+def get_contact(request: TeamRequest):
+    # Admin-only personal data: POST with the password, and deliberately not in the response cache.
+    # A team without a contact row gets all-null fields rather than a 404.
+    if request.password != env.password_env:
+        raise HTTPException(status_code=403, detail="Unauthorized")
+
+    with Session() as session:
+        if session.get(Team, request.team_id) is None:
+            raise not_found()
+        contact = session.get(TeamContact, request.team_id)
+        if contact is None:
+            return TeamContactResponse(team_id=request.team_id)
+        return TeamContactResponse(team_id=request.team_id, contact_name=contact.name,
+                                   email=contact.email, phone=contact.phone)

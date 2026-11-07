@@ -6,3 +6,6 @@ env/
 .venv/
 *.html
 *.pdf
+# Team contact info (personal data)
+database/contacts.csv
+CSV_Imports/*
