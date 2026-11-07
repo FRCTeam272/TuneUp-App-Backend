@@ -34,6 +34,17 @@ class Event(Base):
     team_id = Column(Integer, ForeignKey('team.id'))
     team = relationship(Team)
 
+class TeamContact(Base):
+    """Contact person for a team (loaded from contacts.csv). Admin-only: never returned by public routes.
+
+    A separate table rather than columns on `team` because create_all can't add columns to an existing table.
+    """
+    __tablename__ = 'team_contact'
+    team_id = Column(Integer, ForeignKey('team.id'), primary_key=True)
+    name = Column(String(250), nullable=True)
+    email = Column(String(250), nullable=True)
+    phone = Column(String(50), nullable=True)
+
 # Version counters that back the response cache in routes/cache.py.
 # Every write to a table bumps the matching key in the same transaction, which is how
 # all gunicorn workers learn their cached responses are stale.

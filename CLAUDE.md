@@ -10,15 +10,21 @@ removed `app.route`, which `main.py` uses).
 - `password` — shared admin password checked on every write endpoint
 
 ## Layout
-- `database/database_setup.py` — models (`Team`, `Score`, `Event`, `CacheVersion`), the single shared
+- `database/database_setup.py` — models (`Team`, `Score`, `Event`, `TeamContact`, `CacheVersion`), the single shared
   `engine`/`Session`, `bump_cache_versions()`. Importing it runs `create_all` (no migrations;
   new tables appear automatically, column changes do not).
 - `routes/` — routers mounted at `/team`, `/score`, `/display`, `/schedule`.
 - `routes/cache.py` + `routes/data.py` — response cache (see below).
-- `database/load_teams.py` — run from `database/` (`python load_teams.py`): wipes teams+events
-  and reloads from `schedule.csv`. CSV columns are mislabeled: "Team Number" holds the name and
-  "Team Name" holds the number; row 0 holds the time for each activity column. Event date is
-  hard-coded to 2025-11-22.
+- `database/load_teams.py` — run from `database/` (`python load_teams.py [schedule.csv [contacts.csv]]`;
+  missing paths are asked for with a tkinter file dialog opened in `CSV_Imports/`, gitignored): wipes
+  teams+events and reloads from the schedule CSV. The team number is whichever of "Team Number"/
+  "Team Name" is numeric (older schedules had them swapped); row 0 holds the time for each activity
+  column. Event date is `EVENT_DATE` (2026-11-21).
+  Also wipes `team_contact` and reloads it from the contacts CSV (skipped if the dialog is cancelled).
+- `database/load_contacts.py` — run from `database/` after `load_teams.py` to (re)load only contacts
+  (e.g. the registration `receipts.csv`; personal data, never commit it). Header names are matched
+  loosely; see its docstring. `database/file_picker.py` holds the shared dialog.
+  Contacts are admin-only: served solely by `POST /team/get_contact` (password-checked, never cached).
 - `database/query_data.py`, `dummy_data.py`, `scripts/` — one-off utilities, not used by the API.
 
 ## Caching — keep this working when editing routes
