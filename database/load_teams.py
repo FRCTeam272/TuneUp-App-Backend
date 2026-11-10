@@ -1,6 +1,7 @@
 from sqlalchemy.orm import sessionmaker
-from database_setup import Team, TeamContact, Event, engine, ROSTER, SCORES, bump_cache_versions
+from database_setup import Team, Event, engine, ROSTER, SCORES, bump_cache_versions
 from load_contacts import load_contacts
+from reset_db import confirm_reset, reset_data
 from file_picker import pick_csv
 import pandas as pd
 import sys
@@ -63,10 +64,8 @@ def load_teams_and_events_from_csv(csv_file_path='schedule.csv', contacts_file_p
         print(f"Extracted {len(time_mapping)} time mappings")
         
         # Clear existing data
-        print("Clearing existing teams, events and contacts...")
-        session.query(TeamContact).delete()
-        session.query(Event).delete()
-        session.query(Team).delete()
+        print("Clearing all existing data (scores, contacts, events and teams)...")
+        reset_data(session)
         # No commit here: the wipe and the reload commit together, so a failure leaves the old data intact.
         
         teams_added = 0
@@ -191,6 +190,9 @@ if __name__ == "__main__":
         "Select the contacts CSV (e.g. receipts.csv) - Cancel to skip contacts",
         initialdir=os.path.dirname(os.path.abspath(schedule_path)),
     )
+
+    if not confirm_reset():
+        sys.exit("Cancelled - nothing changed")
 
     # Load teams and events from CSV
     if load_teams_and_events_from_csv(schedule_path, contacts_path):

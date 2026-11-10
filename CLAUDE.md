@@ -18,8 +18,9 @@ SQLAlchemy 2.1 uses psycopg 3 (not psycopg2) for `postgresql://` URLs.
 - `routes/` — routers mounted at `/team`, `/score`, `/display`, `/schedule`.
 - `routes/cache.py` + `routes/data.py` — response cache (see below).
 - `database/load_teams.py` — run from `database/` (`python load_teams.py [schedule.csv [contacts.csv]]`;
-  missing paths are asked for with a tkinter file dialog opened in `CSV_Imports/`, gitignored): wipes
-  teams+events and reloads from the schedule CSV. The team number is whichever of "Team Number"/
+  missing paths are asked for with a tkinter file dialog opened in `CSV_Imports/`, gitignored): after a
+  typed confirmation, wipes all data **including scores** (`reset_data()` in `database/reset_db.py`, which
+  can also be run alone) and reloads from the schedule CSV. The team number is whichever of "Team Number"/
   "Team Name" is numeric (older schedules had them swapped); row 0 holds the time for each activity
   column. Event date is `EVENT_DATE` (2026-11-21).
   Also wipes `team_contact` and reloads it from the contacts CSV (skipped if the dialog is cancelled).
