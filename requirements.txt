@@ -22,6 +22,7 @@ pydantic==2.14.0
 pydantic_core==2.50.0
 python-dateutil==4.0.0
 python-dotenv==1.2.4
+qrcode==8.2
 requests==2.34.2
 soupsieve==3.0.1
 SQLAlchemy==2.1.4
