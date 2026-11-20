@@ -88,8 +88,18 @@ conn = engine.connect()
 
 OUTPUT_DIR = os.path.join(SCRIPT_DIR, "generated_schedules")
 TEAMS_DIR = os.path.join(OUTPUT_DIR, "teams")  # team PDFs
-HTML_DIR = os.path.join(TEAMS_DIR, "HTML")     # all HTML output
+HTML_DIR = os.path.join(TEAMS_DIR, "HTML")     # team HTML output
+JUDGES_DIR = os.path.join(OUTPUT_DIR, "judges")      # judge group PDFs
+JUDGES_HTML_DIR = os.path.join(JUDGES_DIR, "HTML")   # judge group HTML output
 os.makedirs(HTML_DIR, exist_ok=True)
+os.makedirs(JUDGES_HTML_DIR, exist_ok=True)
+
+
+def as_datetime(event_date):
+    """SQLite returns strings, Postgres returns datetimes."""
+    if isinstance(event_date, str):
+        return datetime.fromisoformat(event_date)
+    return event_date
 
 
 def format_room(room):
@@ -124,9 +134,7 @@ def html_document(title, body):
 def team_page(team_id, team_name, room, events):
     rows = ""
     for event_name, event_date in events:
-        if isinstance(event_date, str):  # SQLite returns strings, Postgres returns datetimes
-            event_date = datetime.fromisoformat(event_date)
-        time_str = event_date.strftime('%I:%M %p')
+        time_str = as_datetime(event_date).strftime('%I:%M %p')
         rows += f"""
         <tr>
             <td>{escape(event_name)}</td>
@@ -178,6 +186,15 @@ for team_id, team_name, room in teams:
     document.write_pdf(pdf_output_path)
     print(f"Team schedule PDF generated: {pdf_output_path}")
 
+# Judge group visits: "<Session>: Judge Grp N" events, grouped by the judge group
+judge_events = conn.execute(text("""
+    SELECT e.name, e.date, e.team_id, t.name, t.room
+    FROM event e
+    LEFT JOIN team t ON e.team_id = t.id
+    WHERE e.team_id IS NOT NULL
+    ORDER BY e.date, e.team_id
+""")).all()
+
 conn.close()
 engine.dispose()
 
@@ -228,3 +245,82 @@ signs_html = f"""<!DOCTYPE html>
 signs_pdf_path = os.path.join(OUTPUT_DIR, 'team_signs.pdf')
 HTML(string=signs_html).write_pdf(signs_pdf_path)
 print(f"Team signs PDF generated: {signs_pdf_path} ({len(teams)} teams)")
+
+# Judge group schedules: one page per judge group listing its teams in time order.
+# Event names look like "Morning Session 1: Judge Grp 2".
+judge_groups = {}
+for event_name, event_date, team_id, team_name, room in judge_events:
+    session_name, _, detail = event_name.partition(": ")
+    detail = detail.strip()
+    if not detail.lower().startswith("judge"):
+        continue
+    judge_groups.setdefault(detail, []).append(
+        (as_datetime(event_date), session_name.strip(), team_id, team_name or f"Team {team_id}", room)
+    )
+
+
+def group_sort_key(group_name):
+    """Sort 'Judge Grp 10' after 'Judge Grp 2'."""
+    suffix = group_name.rsplit(" ", 1)[-1]
+    return (int(suffix), group_name) if suffix.isdigit() else (float("inf"), group_name)
+
+
+def judge_group_page(group_name, visits):
+    rows = "".join(f"""
+        <tr>
+            <td>{visit_date.strftime('%I:%M %p')}</td>
+            <td>{escape(session_name)}</td>
+            <td>{team_id}</td>
+            <td>{escape(team_name)}</td>
+            <td>{escape(format_room(room))}</td>
+        </tr>""" for visit_date, session_name, team_id, team_name, room in
+        sorted(visits, key=lambda visit: visit[:3]))
+    return f"""
+<div class="team-page">
+    <h1>{escape(group_name)}</h1>
+    <table>
+        <tr>
+            <th>Time</th>
+            <th>Session</th>
+            <th>Team Number</th>
+            <th>Team Name</th>
+            <th>Room</th>
+        </tr>{rows}
+    </table>
+    {QR_FOOTER}
+</div>
+"""
+
+
+judge_pages = []
+judge_documents = []
+for group_name in sorted(judge_groups, key=group_sort_key):
+    page = judge_group_page(group_name, judge_groups[group_name])
+    judge_pages.append(page)
+
+    group_slug = group_name.replace(" ", "_").lower()
+    group_html = html_document(f"Schedule - {group_name}", page)
+    group_html_path = os.path.join(JUDGES_HTML_DIR, f'schedule_{group_slug}.html')
+    with open(group_html_path, 'w') as f:
+        f.write(group_html)
+    print(f"Judge group schedule generated: {group_html_path}")
+
+    document = HTML(string=group_html).render()
+    judge_documents.append(document)
+    group_pdf_path = os.path.join(JUDGES_DIR, f'{group_slug}_schedule.pdf')
+    document.write_pdf(group_pdf_path)
+    print(f"Judge group schedule PDF generated: {group_pdf_path}")
+
+# Full judge schedule: every judge group, one group per page
+judge_html_path = os.path.join(JUDGES_HTML_DIR, 'judge_schedules.html')
+with open(judge_html_path, 'w') as f:
+    f.write(html_document("Judge Schedules", "".join(judge_pages)))
+print(f"Judge schedules generated: {judge_html_path}")
+
+if judge_documents:
+    all_judge_pages = [p for document in judge_documents for p in document.pages]
+    judge_pdf_path = os.path.join(OUTPUT_DIR, 'judge_schedules.pdf')
+    judge_documents[0].copy(all_judge_pages).write_pdf(judge_pdf_path)
+    print(f"Judge schedules PDF generated: {judge_pdf_path} ({len(all_judge_pages)} pages)")
+else:
+    print("No judge group events found - no judge schedules generated")
